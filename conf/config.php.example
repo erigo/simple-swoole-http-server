@@ -1,0 +1,32 @@
+<?php
+return [
+    // 启动的 worker 进程数, 这里设置为CPU的1-4倍最合理, 更多请参考: http://wiki.swoole.com/wiki/page/275.html
+    'worker_num' => 1,
+
+    // 设置 worker 进程的最大任务数, 一个 worker 进程在处理完超过此数值的任务后将自动退出, 这个参数是为了防止PHP进程内存溢出
+    // 注意：max_request 只能用于同步阻塞的服务器，纯异步的 Server 不应当设置 max_request
+    'max_request' => 0,
+
+    // 最大允许的连接数, 如 max_conn => 10000, 此参数用来设置Server最大允许维持多少个tcp连接。超过此数量后，新进入的连接将被拒绝。
+    // * max_connection 最大不得超过操作系统 ulimit -n 的值，否则会报一条警告信息，并重置为 ulimit -n 的值
+    // * max_connection 默认值为 ulimit -n 的值
+    // 'max_conn' =>
+
+    // 守护进程化, 开启守护进程模式后，标准输出将会被重定向到 log_file
+    'daemonize' => false,
+
+    // 运行期发生的异常信息会记录到这个文件中, 注意 log_file 不会自动切分文件，所以需要定期清理此文件
+    // 'log_file' => '/tmp/swoole.log',
+    // 设置错误日志打印的等级，范围是0-5
+    'log_level' => 1,
+
+    // 更多配置请参考: http://wiki.swoole.com/wiki/page/274.html
+
+    // Redis 服务器配置
+    'redis_conf' => [
+        'host' => '127.0.0.1',
+        'port' => '6379',
+        // 'auth' => 'password',
+        // 'db' => '0'
+    ]
+];

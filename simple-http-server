@@ -1,0 +1,128 @@
+#! /usr/bin/env php
+<?php
+date_default_timezone_set('PRC');
+
+include_once "utils.php";
+$config = require __DIR__ . '/conf/config.php';
+
+class SimpleHTTPServer
+{
+    private $host;
+    private $port;
+    private $settings = array();
+    private $serv;
+
+    public function __construct($host = '0.0.0.0', $port = 9501)
+    {
+        $this->host = $host;
+        $this->port = $port;
+    }
+
+    public function set($settings)
+    {
+        $this->settings = $settings;
+    }
+
+    public function run()
+    {
+        $this->serv = new swoole_http_server($this->host, $this->port);
+        $this->serv->set($this->settings);
+        $this->serv->on('WorkerStart', array($this, 'onWorkerStart'));
+        $this->serv->on('request', array($this, 'onRequest'));
+        $this->serv->start();
+    }
+
+    // 响应 swoole_http_server 的 WorkerStart 事件
+    public function onWorkerStart()
+    {
+        // 连接 redis 缓存服务器
+        // $this->serv->redis = $this->connectRedis($this->settings['redis_conf']);
+    }
+
+    // 建立 Redis 连接池
+    // private function connectRedis($config)
+    // {
+    //     $redis = new Redis();
+    //     try {
+    //         $redis->pconnect($config['host'], $config['port']) OR trace('Redis 连接失败, [' . $redis->getLastError() . ']');
+    //         if (isset($config['auth']) && $config['auth']) {
+    //             $redis->auth($config['auth']) OR trace('Redis 验证失败, [' . $redis->getLastError() . ']');
+    //         }
+    //     } catch (RedisException $e) {
+    //         trace('[Redis] Uncaught exception, ' . $e->getMessage());
+    //     }
+    //
+    //     return $redis;
+    // }
+
+    // 响应 swoole_http_server 的 Request 事件
+    public function onRequest(swoole_http_request $request, swoole_http_response $response)
+    {
+        $response->header('Server', 'swoole-http-server');
+        // 获取请求路径(REQUEST_URI)
+        $request_uri = isset($request->server['request_uri']) ? $request->server['request_uri']
+            : $request->server['path_info'];
+
+        switch ($request_uri) {
+            // route to server stats page.
+            case '/stats':
+                $response->write('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><title>Server Stats</title><style
+type="text/css">body{font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 0.875rem;
+color:rgba(0, 0, 0, 0.87); line-height:1.5;}</style></head><body>');
+                $this->getServerStats($response);
+                // $this->getRedisStats($request, $response);
+                $response->write('</body></html>');
+                $response->end();
+                break;
+            // route to Foo function.
+            case '/api/foo':
+                $this->Foo($request, $response);
+                break;
+            default:
+                $response->status(404);
+                return $response->end('404, Not Found!');
+        }
+    }
+
+    public function getServerStats($response)
+    {
+        $response->write('<h2>Server Stats:</h2>');
+        foreach ($this->serv->stats() as $key => $value) {
+            $response->write($key . ': ' . $value . '<br />');
+        }
+    }
+
+    public function getRedisStats($request, $response)
+    {
+        $response->write('<h2>Redis Stats:</h2>');
+        $options = array('Clients', 'Memory');
+        if (isset($request->get['redis-include'])) {
+            $options = array_merge($options, explode(',', $request->get['redis-include']));
+        }
+        foreach ($options as $option) {
+            $response->write('<h3>' . $option . '</h3>');
+            if ($ret = $this->serv->redis->info($option)) {
+                foreach ($ret as $key => $value) {
+                    $response->write($key . ': ' . $value . '<br />');
+                }
+            }
+        }
+    }
+
+    /**
+     * function Foo()
+     *
+     * @param $request
+     * @param $response
+     */
+    protected function Foo($request, $response)
+    {
+        $response->write('api-foo');
+        $response->end('');
+    }
+
+}
+
+$server = new SimpleHTTPServer();
+$server->set($config);
+$server->run();

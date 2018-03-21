@@ -1,0 +1,13 @@
+{
+    "name": "erigo/simple-swoole-http-server",
+    "description": "A very simple swoole http server.",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Erigo",
+            "email": "erigocn@gmail.com"
+        }
+    ],
+    "require": {}
+}
