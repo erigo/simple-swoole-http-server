@@ -29,6 +29,7 @@ class SimpleHTTPServer
         $this->serv->set($this->settings);
         $this->serv->on('WorkerStart', array($this, 'onWorkerStart'));
         $this->serv->on('request', array($this, 'onRequest'));
+        echo "`SimpleHTTPServer` has been started. Press `Ctrl + C` to exit.\n";
         $this->serv->start();
     }
 
